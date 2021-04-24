@@ -52,6 +52,27 @@ impl Default for ArrayConfig {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct MatrixConfig {
+    value: Value,
+    rows: Range,
+    columns: Range,
+}
+
+impl MatrixConfig {
+    pub fn value(&self) -> Value {
+        self.value
+    }
+
+    pub fn rows(&self) -> Range {
+        self.rows
+    }
+
+    pub fn columns(&self) -> Range {
+        self.columns
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::configs::{ArrayConfig, Range, Value};
