@@ -1,69 +1,20 @@
-mod application_args;
+extern crate clap;
+extern crate serde;
+
 mod configs;
 mod generators;
+mod program;
 mod time_complexity;
 
-use crate::time_complexity::Stats;
+use crate::configs::ArrayConfig;
+use crate::generators::ArrayGenerator;
+use crate::program::Program;
 use clap::{App, Arg};
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
-use std::process::Command;
-use std::slice::Chunks;
-use std::time::{Duration, Instant};
-
-extern crate clap;
-
-#[allow(dead_code)]
-fn write_to_file<P: AsRef<Path>>(path: P, buf: &[u8]) {
-    let mut file = match File::create(&path) {
-        Ok(f) => f,
-        Err(e) => panic!(
-            "Can't create/truncate \"{}\": {}",
-            path.as_ref().display(),
-            e
-        ),
-    };
-
-    if let Err(e) = file.write_all(&buf) {
-        panic!("Can't write to \"{}\": {}", path.as_ref().display(), e);
-    }
-}
-
-fn get_statistics(chunks: Chunks<Duration>) -> Vec<Stats> {
-    //TODO: Может быть не эффективно
-
-    let mut buf = Vec::with_capacity(chunks.len());
-    for chunk in chunks {
-        let mut stats =
-            chunk
-                .iter()
-                .map(|d| d.as_nanos())
-                .fold(Stats::new(0, 0, 0), |mut acc, d| {
-                    acc.min = d.min(acc.min);
-                    acc.max = d.max(acc.max);
-                    acc.avg += d;
-
-                    acc
-                });
-        stats.avg /= chunk.len() as u128;
-
-        buf.push(stats);
-    }
-
-    buf
-}
-
-fn dif(stats: Vec<Stats>) -> Stats {
-    //TODO: Проверить на разных сортировках, к примеру
-    let zip = stats.iter().zip(stats.iter().skip(1));
-    let diffs: Vec<Stats> = zip.map(|(f, s)| s - f).collect();
-    let dif_sum: Stats = diffs.iter().sum();
-    dif_sum / (diffs.len() as u128)
-}
+use std::convert::TryFrom;
+use std::path::PathBuf;
 
 fn main() {
-    let matches = App::new("Time analyzer")
+    let _matches = App::new("Time analyzer")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about(clap::crate_description!())
@@ -87,43 +38,46 @@ fn main() {
         )
         .get_matches();
 
-    let path_to_binary = Path::new(matches.value_of("path").unwrap());
-    let start_time = Instant::now();
+    let times = {
+        let config = ArrayConfig::default();
+        let arg: ArrayGenerator<i64> = ArrayGenerator::try_from(config).unwrap();
 
-    let command = Command::new(path_to_binary)
-        .args(&["1 2"])
-        .output()
-        .expect("Can't start program");
-    let duration = start_time.elapsed();
+        Program::from(
+            PathBuf::from("/home/naymoll/Projects/Clion/sort.out"),
+            vec![Box::new(arg)],
+            3,
+            1,
+        )
+        .exec()
+        .unwrap()
+    };
 
-    println!("{}", String::from_utf8_lossy(&command.stdout));
-    println!("Exec time: {}sc", duration.as_secs_f32());
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::time_complexity::Stats;
-    use crate::*;
-
-    #[test]
-    fn zip_test() {
-        let vec = vec![1, 2, 3];
-        let zip = vec.iter().zip(vec.iter().skip(1));
-
-        for val in zip {
-            println!("{}:{}", *val.0, *val.1);
-        }
+    println!("Times");
+    for time in &times {
+        println!("{:?}", time);
     }
 
-    #[test]
-    fn dif_test() {
-        let vec = vec![
-            Stats::new(0, 20, 10),
-            Stats::new(20, 40, 30),
-            Stats::new(40, 60, 50),
-        ];
+    let zip = times.iter().zip(times.iter().skip(1));
 
-        let avg_dif = dif(vec);
-        assert_eq!(avg_dif, Stats::new(20, 20, 20))
-    }
+    let times_dif: Vec<f64> = zip
+        .clone()
+        .map(|(f, s)| s.min.as_secs_f64() / f.min.as_secs_f64())
+        .collect();
+    println!("Times dif");
+    println!("{:?}", times_dif);
+
+    let len_dif: Vec<f64> = zip
+        .clone()
+        .map(|(f, s)| s.args_len as f64 / f.args_len as f64)
+        .collect();
+    println!("Len dif");
+    println!("{:?}", len_dif);
+
+    let dif: Vec<f64> = times_dif
+        .iter()
+        .zip(len_dif.iter())
+        .map(|(t, l)| t / l)
+        .collect();
+    println!("Dif");
+    println!("{:?}", dif);
 }

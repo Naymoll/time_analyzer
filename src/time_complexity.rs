@@ -3,7 +3,6 @@ use std::ops::{Add, Div, Sub};
 
 pub enum Complexity {
     Const,
-    Log,
     LogN,
     N,
     NLogN,
