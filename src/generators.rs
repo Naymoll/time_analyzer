@@ -4,7 +4,6 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Uniform;
 use rand::Rng;
 use std::convert::TryFrom;
-use std::fmt::Debug;
 
 pub trait ArgumentGenerator {
     fn len(&self) -> usize;
@@ -50,7 +49,7 @@ impl TryFrom<ArrayConfig> for ArrayGenerator<f64> {
 
 impl<T> ArgumentGenerator for ArrayGenerator<T>
 where
-    T: Copy + Debug + SampleUniform + ToString,
+    T: Copy + SampleUniform + ToString,
 {
     fn len(&self) -> usize {
         self.range.start
@@ -63,13 +62,19 @@ where
 
     fn generate(&self) -> String {
         let rng = rand::thread_rng();
-        let buf: Vec<String> = rng
+
+        let mut buf = Vec::with_capacity(self.len() + 1);
+        buf.push(self.len().to_string());
+
+        let rng_iter = rng
             .sample_iter(Uniform::new_inclusive(self.min, self.max))
             .take(self.len())
-            .map(|v| v.to_string())
-            .collect();
+            .map(|v| v.to_string());
 
-        //format!("{:?}", buf)
+        for value in rng_iter {
+            buf.push(value);
+        }
+
         buf.join(" ")
     }
 }
@@ -81,6 +86,8 @@ pub struct MatrixGenerator<T> {
     columns: Range,
 }
 
+//Разделено, т.к. MatrixGenerator<i64> и MatrixGenerator<f64> это разные типы.
+//Их нельзя вернуть из MatrixGenerator<T>
 impl TryFrom<MatrixConfig> for MatrixGenerator<i64> {
     type Error = ();
 
@@ -115,7 +122,7 @@ impl TryFrom<MatrixConfig> for MatrixGenerator<f64> {
 
 impl<T> ArgumentGenerator for MatrixGenerator<T>
 where
-    T: Copy + Debug + SampleUniform + ToString,
+    T: Copy + SampleUniform + ToString,
 {
     fn len(&self) -> usize {
         self.rows.start * self.columns.start
@@ -129,13 +136,20 @@ where
 
     fn generate(&self) -> String {
         let rng = rand::thread_rng();
-        let buf: Vec<String> = rng
+
+        let mut buf = Vec::with_capacity(self.len() + 2);
+        buf.push(self.rows.start.to_string());
+        buf.push(self.columns.start.to_string());
+
+        let rng_iter = rng
             .sample_iter(Uniform::new_inclusive(self.min, self.max))
             .take(self.len())
-            .map(|v| v.to_string())
-            .collect();
+            .map(|v| v.to_string());
 
-        //format!("{:?}", buf)
+        for value in rng_iter {
+            buf.push(value);
+        }
+
         buf.join(" ")
     }
 }

@@ -73,6 +73,27 @@ impl MatrixConfig {
     }
 }
 
+impl Default for MatrixConfig {
+    fn default() -> Self {
+        MatrixConfig {
+            value: Value::Int {
+                min: i64::MIN,
+                max: i64::MAX,
+            },
+            rows: Range {
+                start: 10,
+                end: 2000,
+                multiplier: 2,
+            },
+            columns: Range {
+                start: 10,
+                end: 2000,
+                multiplier: 2,
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::configs::{ArrayConfig, Range, Value};

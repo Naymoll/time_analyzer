@@ -61,7 +61,7 @@ impl Program {
     }
 }
 
-fn write_args_to_file(path: &Path, generators: &Generators) {
+fn write_args_to_file(path: &Path, generators: &[Box<dyn ArgumentGenerator>]) {
     let args: Vec<String> = generators.iter().map(|x| x.generate()).collect();
     let buf: Vec<u8> = args.into_iter().flat_map(|s| s.into_bytes()).collect();
     let mut file = File::create(&path).expect("Can't create file");
