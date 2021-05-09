@@ -1,4 +1,4 @@
-use crate::generators::ArgumentGenerator;
+use crate::configs::ArgumentGenerator;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::Write;
