@@ -13,8 +13,7 @@ impl ArgumentGenerator for RangeConfig {
     }
 
     fn next_len(&mut self) -> usize {
-        self.range.next();
-        self.range.start
+        self.range.next()
     }
 
     fn generate(&self) -> String {

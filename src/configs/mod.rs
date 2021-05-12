@@ -20,7 +20,6 @@ pub trait ArgumentGenerator {
 //т.к это нарушение trait object safety.
 //Возможно, есть другой способ, но я - ¯\_(ツ)_/¯
 #[derive(Deserialize, Serialize)]
-#[serde(untagged)]
 pub enum Config {
     Array(ArrayConfig),
     Matrix(MatrixConfig),
@@ -42,7 +41,7 @@ pub enum Value {
         #[serde(default = "Value::float_max")]
         max: f64,
     },
-    Char,
+    Char, //Генерируемые значения: A-Z | a-z | 0-9
     Bool,
 }
 
@@ -77,8 +76,9 @@ pub struct Range {
 }
 
 impl Range {
-    pub fn next(&mut self) {
+    pub fn next(&mut self) -> usize {
         self.start = (self.start * self.multiplier).min(self.end);
+        self.start
     }
 
     const fn start_default() -> usize {
@@ -94,7 +94,7 @@ impl Range {
     }
 }
 
-fn generate_array_with_distr<T, D>(len: usize, distr: D) -> String
+fn generate_array<T, D>(len: usize, distr: D) -> String
 where
     T: ToString,
     D: Distribution<T>,
@@ -105,7 +105,7 @@ where
     result
 }
 
-fn generate_matrix_with_distr<T, D>(rows: usize, columns: usize, distr: D) -> String
+fn generate_matrix<T, D>(rows: usize, columns: usize, distr: D) -> String
 where
     T: ToString,
     D: Distribution<T>,
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn deserialization_test() {
-        let json = r#"[{"start":10,"end":1000,"multiplier":2},{"value":{"type":"Int","min":0,"max":100},"start":10,"end":1000,"multiplier":2}]"#;
+        let json = r#"[{"Range":{"start":10,"end":1000,"multiplier":2}},{"Array":{"value":{"type":"Int","min":0,"max":100},"start":10,"end":1000,"multiplier":2}}]"#;
         let _from_json: Vec<Config> = serde_json::from_str(&json).unwrap();
     }
 }

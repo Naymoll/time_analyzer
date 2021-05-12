@@ -2,30 +2,35 @@ extern crate clap;
 extern crate serde;
 extern crate serde_json;
 
+mod complexity;
 mod configs;
 mod program;
-mod time_complexity;
+mod report;
+mod run;
 
+use crate::complexity::computate_big_o;
 use crate::configs::{ArgumentGenerator, Config};
 use crate::program::Program;
+use crate::report::Report;
 use clap::{App, Arg};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
-use crate::time_complexity::computate_big_o;
 
 fn load_cfg(cfg_path: &OsStr) -> Vec<Box<dyn ArgumentGenerator>> {
     let json_str = {
         let mut buff = String::new();
-        let mut reader = File::open(cfg_path).expect(""); //TODO: Вывод ошибки
-        reader.read_to_string(&mut buff).expect(""); //TODO: Вывод ошибки
+        let mut reader = File::open(cfg_path).expect("Can't open config file");
+        reader
+            .read_to_string(&mut buff)
+            .expect("Can't read from config file");
 
         buff
     };
 
-    let config: Vec<Config> = serde_json::from_str(&json_str).expect("Can't parse config file");
-    let result = config
+    let config: Vec<Config> =
+        serde_json::from_str(&json_str).expect("Error while parsing config file");
+    config
         .into_iter()
         .map(|c| {
             let config: Box<dyn ArgumentGenerator> = match c {
@@ -35,43 +40,19 @@ fn load_cfg(cfg_path: &OsStr) -> Vec<Box<dyn ArgumentGenerator>> {
             };
             config
         })
-        .collect();
-
-    result
+        .collect()
 }
 
 fn analysis(bin_path: &OsStr, cfg_path: &OsStr) {
-    let times = {
+    let runs = {
         let config = load_cfg(cfg_path);
-
-        Program::from(PathBuf::from(bin_path), config, 15, 1)
-            .exec()
-            .unwrap()
+        Program::from(bin_path, config, 15, 1).exec().unwrap()
     };
 
-    println!("Times");
-    for time in &times {
-        println!("{:?}", time);
-    }
+    let least_sq = computate_big_o(&runs);
+    let report = Report::new(bin_path, cfg_path, runs, least_sq);
 
-    let sq = computate_big_o(&times);
-    println!("Complexity: {}\nRMS: {}%\nCoefficient: {}%", sq.complexity, sq.rms * 100.0, sq.coef * 100.0);
-
-    let zip = times.iter().zip(times.iter().skip(1));
-    let difs: Vec<(f64, f64)> = zip
-        .map(|(f, s)| {
-            (
-                s.min.as_secs_f64() / f.min.as_secs_f64(),
-                s.args_len as f64 / f.args_len as f64,
-            )
-        })
-        .collect();
-    println!("Difference between steps");
-    println!("{:?}", difs);
-
-    let attitude: Vec<f64> = difs.into_iter().map(|(t, l)| t / l).collect();
-    println!("Time/len attitude");
-    println!("{:?}", attitude);
+    println!("{}", report);
 }
 
 fn main() {
@@ -112,26 +93,4 @@ fn main() {
     for (bin_path, cfg_path) in paths {
         analysis(bin_path, cfg_path);
     }
-
-    /*let times_dif: Vec<f64> = zip
-        .clone()
-        .map(|(f, s)| s.min.as_secs_f64() / f.min.as_secs_f64())
-        .collect();
-    println!("Times dif");
-    println!("{:?}", times_dif);
-
-    let len_dif: Vec<f64> = zip
-        .clone()
-        .map(|(f, s)| s.args_len as f64 / f.args_len as f64)
-        .collect();
-    println!("Len dif");
-    println!("{:?}", len_dif);
-
-    let dif: Vec<f64> = times_dif
-        .iter()
-        .zip(len_dif.iter())
-        .map(|(t, l)| t / l)
-        .collect();
-    println!("Dif");
-    println!("{:?}", dif);*/
 }

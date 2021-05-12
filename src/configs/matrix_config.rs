@@ -1,4 +1,4 @@
-use crate::configs::{generate_matrix_with_distr, ArgumentGenerator, Range, Value};
+use crate::configs::{generate_matrix, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
 use serde::{Deserialize, Serialize};
 
@@ -36,29 +36,24 @@ impl ArgumentGenerator for MatrixConfig {
     }
 
     fn next_len(&mut self) -> usize {
-        self.rows.next();
-        self.columns.next();
-
-        self.rows.start * self.columns.start
+        self.rows.next() * self.columns.next()
     }
 
     fn generate(&self) -> String {
         match self.value {
-            Value::Int { min, max } => generate_matrix_with_distr(
+            Value::Int { min, max } => generate_matrix(
                 self.rows.start,
                 self.columns.start,
                 Uniform::new_inclusive(min, max),
             ),
-            Value::Float { min, max } => generate_matrix_with_distr(
+            Value::Float { min, max } => generate_matrix(
                 self.rows.start,
                 self.columns.start,
                 Uniform::new_inclusive(min, max),
             ),
-            Value::Char => {
-                generate_matrix_with_distr(self.rows.start, self.columns.start, Alphanumeric)
-            }
+            Value::Char => generate_matrix(self.rows.start, self.columns.start, Alphanumeric),
             //TODO: Возможно стоит заменить
-            Value::Bool => generate_matrix_with_distr(
+            Value::Bool => generate_matrix(
                 self.rows.start,
                 self.columns.start,
                 Uniform::new_inclusive(0, 1),

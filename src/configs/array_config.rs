@@ -1,4 +1,4 @@
-use crate::configs::{generate_array_with_distr, ArgumentGenerator, Range, Value};
+use crate::configs::{generate_array, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
 use serde::{Deserialize, Serialize};
 
@@ -31,21 +31,18 @@ impl ArgumentGenerator for ArrayConfig {
     }
 
     fn next_len(&mut self) -> usize {
-        self.range.next();
-        self.range.start
+        self.range.next()
     }
 
     fn generate(&self) -> String {
         match self.value {
-            Value::Int { min, max } => {
-                generate_array_with_distr(self.len(), Uniform::new_inclusive(min, max))
-            }
+            Value::Int { min, max } => generate_array(self.len(), Uniform::new_inclusive(min, max)),
             Value::Float { min, max } => {
-                generate_array_with_distr(self.len(), Uniform::new_inclusive(min, max))
+                generate_array(self.len(), Uniform::new_inclusive(min, max))
             }
-            Value::Char => generate_array_with_distr(self.len(), Alphanumeric),
+            Value::Char => generate_array(self.len(), Alphanumeric),
             //TODO: Возможно стоит заменить
-            Value::Bool => generate_array_with_distr(self.len(), Uniform::new_inclusive(0, 1)),
+            Value::Bool => generate_array(self.len(), Uniform::new_inclusive(0, 1)),
         }
     }
 }
