@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::{process, fmt};
+use std::{fmt, process};
 
 use crate::configs::ArgumentGenerator;
-use crate::run::Run;
-use std::time::Instant;
-use std::fmt::{Display, Formatter};
 use crate::program::ErrorKind::NotSuccessful;
+use crate::run::Run;
+use std::fmt::{Display, Formatter};
+use std::time::Instant;
 
 type Generators = Vec<Box<dyn ArgumentGenerator>>;
 
@@ -24,28 +24,22 @@ pub struct Error {
 
 impl Error {
     pub fn new(error_kind: ErrorKind) -> Self {
-        Error {
-            kind: error_kind,
-        }
+        Error { kind: error_kind }
     }
 }
 
-impl std::error::Error for Error {
-
-}
+impl std::error::Error for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.kind {
             ErrorKind::IoError(io_error) => {
                 write!(f, "{}", io_error)
-            },
-            ErrorKind::NotSuccessful(status) => {
-                match status {
-                    Some(code) => write!(f, "Program finished not successful. Exiting code: {}", code),
-                    None => write!(f, "Program terminated by signal"),
-                }
             }
+            ErrorKind::NotSuccessful(status) => match status {
+                Some(code) => write!(f, "Program finished not successful. Exiting code: {}", code),
+                None => write!(f, "Program terminated by signal"),
+            },
         }
     }
 }
