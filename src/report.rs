@@ -4,6 +4,7 @@ use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 
+#[derive(Debug)]
 pub struct Report {
     bin_path: PathBuf,
     conf_path: PathBuf,
@@ -35,8 +36,8 @@ impl Display for Report {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         {
             let header = format!(
-                "Binary file:{}\n\
-                Config file:{}\n\
+                "Binary file: {}\n\
+                Config file: {}\n\
                 Len            Min time(sec)   Avg time(sec)   Max time(sec)\n\
                 -------------------------------------------------------------",
                 self.bin_path.display(),
@@ -47,39 +48,24 @@ impl Display for Report {
         }
 
         {
-            let mut body = String::new();
             for run in &self.runs {
                 let line = format!(
-                    "{:<12}{:>16}{:>16}{:>16}\n",
+                    "{:<12.5}{:>16.5}{:>16.5}{:>16.5}",
                     run.len, run.min, run.avg, run.max
                 );
-                body.push_str(&line);
-            }
 
-            writeln!(f, "{}", body)?;
+                writeln!(f, "{}", line)?;
+            }
         }
 
         let complexity = format!(
-            "Complexity: {}{}\nRMS: {}%",
+            "Complexity: {:.2} {}\nRMS: {:.2}%",
             self.coef,
             self.complexity,
             self.rms * 100.0
         );
 
-        writeln!(f, "{}", complexity)
-    }
-}
-
-impl Debug for Report {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Report")
-            .field("binary_file", &self.bin_path)
-            .field("config_file", &self.conf_path)
-            .field("runs", &self.runs)
-            .field("complexity", &self.complexity)
-            .field("coef", &self.coef)
-            .field("rms", &self.rms)
-            .finish()
+        write!(f, "{}", complexity)
     }
 }
 
