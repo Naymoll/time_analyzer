@@ -10,6 +10,8 @@ use rand::distributions::Distribution;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
+use validator::Validate;
+
 pub trait ArgumentGenerator {
     fn len(&self) -> usize;
     fn next_len(&mut self) -> usize;
@@ -65,9 +67,10 @@ impl Value {
     }
 }
 
-#[derive(Deserialize, Serialize, Copy, Clone)]
+#[derive(Deserialize, Serialize, Validate, Copy, Clone)]
 pub struct Range {
     #[serde(default = "Range::start_default")]
+    #[validate(range(min = 1))]
     pub start: usize,
     #[serde(default = "Range::end_default")]
     pub end: usize,

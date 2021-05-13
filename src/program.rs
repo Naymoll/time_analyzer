@@ -1,18 +1,21 @@
+use crate::configs::{ArgumentGenerator, Config};
+use crate::run::Run;
+
+use serde::Deserialize;
+use validator::Validate;
+
 use std::fmt::{Display, Formatter};
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::{fmt, process};
-
-use crate::run::Run;
-use crate::Generators;
 
 #[derive(Debug)]
 pub enum ErrorKind {
     FailedToStart(std::io::Error),
     NotSuccessful(Option<i32>),
-    CantWriteArgs(std::io::Error),
+    CantWriteArgs(PathBuf, std::io::Error),
 }
 
 #[derive(Debug)]
@@ -33,9 +36,9 @@ impl Error {
         }
     }
 
-    pub fn cant_write_args(error: std::io::Error) -> Self {
+    pub fn cant_write_args(path: PathBuf, error: std::io::Error) -> Self {
         Error {
-            kind: ErrorKind::CantWriteArgs(error),
+            kind: ErrorKind::CantWriteArgs(path, error),
         }
     }
 }
@@ -48,35 +51,88 @@ impl Display for Error {
             ErrorKind::FailedToStart(io_error) => {
                 write!(f, "Failed to start program. {}", io_error)
             }
-            ErrorKind::CantWriteArgs(io_error) => {
-                write!(f, "Can't write arguments to temporary file. {}", io_error)
+            ErrorKind::CantWriteArgs(path, io_error) => {
+                write!(
+                    f,
+                    "Can't write arguments to temporary file '{}'. {}",
+                    path.display(),
+                    io_error
+                )
             }
             ErrorKind::NotSuccessful(status) => match status {
-                Some(code) => write!(f, "Program finished not successful. Exiting code: {}", code),
+                Some(code) => write!(
+                    f,
+                    "Program finished not successful. Exiting code '{}'",
+                    code
+                ),
                 None => write!(f, "Program terminated by signal"),
             },
         }
     }
 }
 
+//Специальная стуктура, с помощью который валидируются данные,
+// происзодить преобразование с Vec<Config> в Generators
+#[derive(Deserialize, Validate)]
+struct ProgramConfig {
+    path: PathBuf,
+    path_to_temp: PathBuf,
+    args: Vec<Config>,
+    #[validate(range(min = 1))]
+    gens: usize,
+    #[validate(range(min = 1))]
+    iters: usize,
+}
+
+type Generators = Vec<Box<dyn ArgumentGenerator>>;
+
 pub struct Program {
     path: PathBuf,
+    path_to_temp: PathBuf,
     args: Generators,
     gens: usize,
     iters: usize,
 }
 
-impl Program {
-    pub fn from<P>(path: P, args: Generators, gens: usize, iters: usize) -> Self
-    where
-        P: AsRef<Path>,
-    {
+impl From<ProgramConfig> for Program {
+    fn from(config: ProgramConfig) -> Self {
+        let args = config
+            .args
+            .into_iter()
+            .map(|c| {
+                let config: Box<dyn ArgumentGenerator> = match c {
+                    Config::Array(array) => Box::new(array),
+                    Config::Matrix(matrix) => Box::new(matrix),
+                    Config::Range(range) => Box::new(range),
+                };
+                config
+            })
+            .collect();
+
         Program {
-            path: path.as_ref().to_path_buf(),
+            path: config.path,
+            path_to_temp: config.path_to_temp,
             args,
-            gens,
-            iters,
+            gens: config.gens,
+            iters: config.iters,
         }
+    }
+}
+
+impl Program {
+    pub fn load_from_config<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+        let json = {
+            let mut file = File::open(path.as_ref())?;
+            let mut buff = String::new();
+            file.read_to_string(&mut buff)?;
+
+            buff
+        };
+
+        let program_config: ProgramConfig = serde_json::from_str(&json)?;
+        program_config.validate()?;
+
+        Ok(program_config.into())
     }
 
     pub fn exec(&mut self) -> Result<Vec<Run>, Error> {
@@ -91,7 +147,12 @@ impl Program {
             };
 
             for iter in 0..self.iters {
-                let file_name = format!("gen_{}_inter{}.txt", gen, iter);
+                let file_name = format!(
+                    "{}/generation_{}_interation{}.txt",
+                    self.path_to_temp.display(),
+                    gen,
+                    iter
+                );
                 let path = Path::new(&file_name);
                 self.write_args_to_file(path)?;
 
@@ -115,15 +176,39 @@ impl Program {
         Ok(runs)
     }
 
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
     fn write_args_to_file<P>(&self, path: P) -> Result<(), Error>
     where
         P: AsRef<Path>,
     {
+        let path = path.as_ref();
+
         let args: Vec<String> = self.args.iter().map(|x| x.generate()).collect();
         let buf: Vec<u8> = args.join(" ").into_bytes(); //Разделитель между значениями
-        let mut file = File::create(path.as_ref()).map_err(Error::cant_write_args)?;
-        file.write_all(&buf).map_err(Error::cant_write_args)?;
+
+        let mut file =
+            File::create(path).map_err(|e| Error::cant_write_args(path.to_path_buf(), e))?;
+        file.write_all(&buf)
+            .map_err(|e| Error::cant_write_args(path.to_path_buf(), e))?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::program::{Program, ProgramConfig};
+    use validator::Validate;
+
+    #[test]
+    fn validate_test() {
+        let json = r#"{"path":"123", "args":[], "gens":1, "iters":1}"#;
+        let config: ProgramConfig = serde_json::from_str(&json).unwrap();
+        config.validate().unwrap();
+
+        let _program: Program = config.into();
     }
 }

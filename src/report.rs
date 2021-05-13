@@ -15,10 +15,11 @@ pub struct Report {
 }
 
 impl Report {
-    pub fn new<T, P>(bin_path: P, cfg_path: P, runs: T, least_squares: LeastSquares) -> Self
+    pub fn new<T, B, C>(bin_path: B, cfg_path: C, runs: T, least_squares: LeastSquares) -> Self
     where
         T: Into<Vec<Run>>,
-        P: AsRef<Path>,
+        B: AsRef<Path>,
+        C: AsRef<Path>,
     {
         Self {
             bin_path: bin_path.as_ref().to_path_buf(),
@@ -31,7 +32,7 @@ impl Report {
     }
 }
 
-//TODO: Поправить вывод
+//TODO: Подумать над выводом
 impl Display for Report {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         {
@@ -59,7 +60,7 @@ impl Display for Report {
         }
 
         let complexity = format!(
-            "Complexity: {:.2} {}\nRMS: {:.2}%",
+            "Complexity: {} {}\nRMS: {:.2}%",
             self.coef,
             self.complexity,
             self.rms * 100.0
@@ -76,19 +77,9 @@ mod tests {
     use crate::run::Run;
 
     fn new_report() -> Report {
-        let run1 = Run {
-            min: 20.012939898124,
-            max: 40.0032942304923049023,
-            avg: 30.002340923050324902,
-            len: 201,
-        };
+        let run1 = Run::default();
 
-        let run2 = Run {
-            min: 40.0,
-            max: 60.0,
-            avg: 50.0,
-            len: 4000,
-        };
+        let run2 = Run::default();
 
         let squares = LeastSquares {
             coef: 10.0,
