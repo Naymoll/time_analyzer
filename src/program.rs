@@ -120,7 +120,7 @@ impl Program {
         P: AsRef<Path>,
     {
         let args: Vec<String> = self.args.iter().map(|x| x.generate()).collect();
-        let buf: Vec<u8> = args.into_iter().flat_map(|s| s.into_bytes()).collect();
+        let buf: Vec<u8> = args.join(" ").into_bytes(); //Разделитель между значениями
         let mut file = File::create(path.as_ref()).map_err(Error::cant_write_args)?;
         file.write_all(&buf).map_err(Error::cant_write_args)?;
 
