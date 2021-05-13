@@ -1,20 +1,18 @@
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use std::{fmt, process};
 
-use crate::configs::ArgumentGenerator;
-use crate::program::ErrorKind::NotSuccessful;
 use crate::run::Run;
-use std::fmt::{Display, Formatter};
-use std::time::Instant;
-
-type Generators = Vec<Box<dyn ArgumentGenerator>>;
+use crate::Generators;
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    IoError(std::io::Error),
+    FailedToStart(std::io::Error),
     NotSuccessful(Option<i32>),
+    CantWriteArgs(std::io::Error),
 }
 
 #[derive(Debug)]
@@ -23,8 +21,22 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn new(error_kind: ErrorKind) -> Self {
-        Error { kind: error_kind }
+    pub fn failed_to_start(error: std::io::Error) -> Self {
+        Error {
+            kind: ErrorKind::FailedToStart(error),
+        }
+    }
+
+    pub fn not_successful(status: Option<i32>) -> Self {
+        Error {
+            kind: ErrorKind::NotSuccessful(status),
+        }
+    }
+
+    pub fn cant_write_args(error: std::io::Error) -> Self {
+        Error {
+            kind: ErrorKind::CantWriteArgs(error),
+        }
     }
 }
 
@@ -33,21 +45,16 @@ impl std::error::Error for Error {}
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ErrorKind::IoError(io_error) => {
-                write!(f, "{}", io_error)
+            ErrorKind::FailedToStart(io_error) => {
+                write!(f, "Failed to start program. {}", io_error)
+            }
+            ErrorKind::CantWriteArgs(io_error) => {
+                write!(f, "Can't write arguments to temporary file. {}", io_error)
             }
             ErrorKind::NotSuccessful(status) => match status {
                 Some(code) => write!(f, "Program finished not successful. Exiting code: {}", code),
                 None => write!(f, "Program terminated by signal"),
             },
-        }
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error {
-            kind: ErrorKind::IoError(error),
         }
     }
 }
@@ -92,11 +99,11 @@ impl Program {
                 let command = process::Command::new(&self.path)
                     .arg(&path)
                     .output()
-                    .expect("Can't start program");
+                    .map_err(Error::failed_to_start)?;
                 let duration = start_time.elapsed();
 
                 if !command.status.success() {
-                    return Err(Error::new(NotSuccessful(command.status.code())));
+                    return Err(Error::not_successful(command.status.code()));
                 }
 
                 run.update(duration.as_secs_f64());
@@ -114,8 +121,8 @@ impl Program {
     {
         let args: Vec<String> = self.args.iter().map(|x| x.generate()).collect();
         let buf: Vec<u8> = args.into_iter().flat_map(|s| s.into_bytes()).collect();
-        let mut file = File::create(path.as_ref())?;
-        file.write_all(&buf)?;
+        let mut file = File::create(path.as_ref()).map_err(Error::cant_write_args)?;
+        file.write_all(&buf).map_err(Error::cant_write_args)?;
 
         Ok(())
     }

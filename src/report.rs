@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug)]
 pub struct Report {
     bin_path: PathBuf,
-    conf_path: PathBuf,
+    cfg_path: PathBuf,
     runs: Vec<Run>,
     complexity: Complexity,
     coef: f64,
@@ -15,14 +15,14 @@ pub struct Report {
 }
 
 impl Report {
-    pub fn new<T, P>(bin_path: P, conf_path: P, runs: T, least_squares: LeastSquares) -> Self
+    pub fn new<T, P>(bin_path: P, cfg_path: P, runs: T, least_squares: LeastSquares) -> Self
     where
         T: Into<Vec<Run>>,
         P: AsRef<Path>,
     {
         Self {
             bin_path: bin_path.as_ref().to_path_buf(),
-            conf_path: conf_path.as_ref().to_path_buf(),
+            cfg_path: cfg_path.as_ref().to_path_buf(),
             runs: runs.into(),
             complexity: least_squares.complexity,
             coef: least_squares.coef,
@@ -41,7 +41,7 @@ impl Display for Report {
                 Len            Min time(sec)   Avg time(sec)   Max time(sec)\n\
                 -------------------------------------------------------------",
                 self.bin_path.display(),
-                self.conf_path.display()
+                self.cfg_path.display()
             );
 
             writeln!(f, "{}", header)?;
