@@ -146,3 +146,6 @@ $ cargo build --release
    "iters": 1
 }
 ````
+
+## Пример работы
+![Пример](https://drive.google.com/uc?export=download&id=1waJnhjvjaTWkOnKxGFsKy5Fjt-QeCX4T)
