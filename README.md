@@ -61,7 +61,7 @@ $ cargo build --release
 #### Диапазон чисел
 ````
 {
-    “Range”: { 
+    "Range": { 
         "start": 1024,
         "end": 160124,
         "multiplier": 2
