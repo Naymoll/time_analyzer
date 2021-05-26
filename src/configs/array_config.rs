@@ -1,11 +1,13 @@
 use crate::configs::{generate_array, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
 use serde::Deserialize;
+use validator::Validate;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct ArrayConfig {
     value: Value,
     #[serde(flatten)]
+    #[validate]
     range: Range,
 }
 

@@ -1,11 +1,14 @@
 use crate::configs::{generate_matrix, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
 use serde::Deserialize;
+use validator::Validate;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct MatrixConfig {
     value: Value,
+    #[validate]
     rows: Range,
+    #[validate]
     columns: Range,
 }
 

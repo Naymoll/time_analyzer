@@ -1,9 +1,11 @@
 use crate::configs::{ArgumentGenerator, Range};
 use serde::Deserialize;
+use validator::Validate;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct RangeConfig {
     #[serde(flatten)]
+    #[validate]
     range: Range,
 }
 

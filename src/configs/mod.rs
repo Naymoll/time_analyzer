@@ -10,7 +10,7 @@ use rand::distributions::Distribution;
 use rand::Rng;
 use serde::Deserialize;
 
-use validator::Validate;
+use validator::{Validate, ValidationErrors};
 
 pub trait ArgumentGenerator {
     fn len(&self) -> usize;
@@ -26,6 +26,16 @@ pub enum Config {
     Array(ArrayConfig),
     Matrix(MatrixConfig),
     Range(RangeConfig),
+}
+
+impl Validate for Config {
+    fn validate(&self) -> Result<(), ValidationErrors> {
+        match self {
+            Config::Array(array) => array.validate(),
+            Config::Matrix(matrix) => matrix.validate(),
+            Config::Range(range) => range.validate(),
+        }
+    }
 }
 
 #[derive(Deserialize, Copy, Clone)]

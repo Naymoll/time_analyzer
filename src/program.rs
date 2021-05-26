@@ -77,6 +77,7 @@ impl Display for Error {
 struct ProgramConfig {
     path: PathBuf,
     path_to_temp: PathBuf,
+    #[validate]
     args: Vec<Config>,
     #[validate(range(min = 1))]
     gens: usize,
@@ -202,18 +203,56 @@ impl Program {
 mod tests {
     use crate::program::ProgramConfig;
     use validator::Validate;
-    /*use crate::configs::array_config::ArrayConfig;
 
     #[test]
     fn des_test() {
         let json = r#"{"path":"123", "path_to_temp":"456", "args":[], "gens":1, "iters":1}"#;
-        let _: ProgramConfig = serde_json::from_str(&json).unwrap();
-    }*/
+        let okay: Result<ProgramConfig,_> = serde_json::from_str(&json);
+
+        assert!(okay.is_ok());
+    }
+
+    #[test]
+    fn des_test_failed() {
+        let json = r#"{"path": "123","path_to_temp": "456","args": [{"Array" : {"value" : {"type" : "Double"}}}],"gens": 1,"iters": 1}"#;
+        let error: Result<ProgramConfig,_> = serde_json::from_str(&json);
+
+        assert!(error.is_err());
+    }
 
     #[test]
     fn validate_test() {
+        let json = r#"{"path": "123","path_to_temp": "456","args": [{"Array" : {"value" : {"type" : "Int"}, "start" : 10}}],"gens": 1,"iters": 1}"#;
+        let config: ProgramConfig = serde_json::from_str(&json).unwrap();
+        let okay = config.validate();
+
+        assert!(okay.is_ok())
+    }
+
+    #[test]
+    fn validate_test_2() {
         let json = r#"{"path":"123", "path_to_temp":"456", "args":[], "gens":1, "iters":1}"#;
         let config: ProgramConfig = serde_json::from_str(&json).unwrap();
-        config.validate().unwrap();
+        let okay = config.validate();
+
+        assert!(okay.is_ok())
+    }
+
+    #[test]
+    fn validate_test_failed() {
+        let json = r#"{"path":"123", "path_to_temp":"456", "args":[], "gens":0, "iters":1}"#;
+        let config: ProgramConfig = serde_json::from_str(&json).unwrap();
+        let error = config.validate();
+
+        assert!(error.is_err())
+    }
+
+    #[test]
+    fn validate_test_failed_2() {
+        let json = r#"{"path": "123","path_to_temp": "456","args": [{"Array" : {"value" : {"type" : "Int"}, "start" : 0}}],"gens": 1,"iters": 1}"#;
+        let config: ProgramConfig = serde_json::from_str(&json).unwrap();
+        let error = config.validate();
+
+        assert!(error.is_err());
     }
 }
