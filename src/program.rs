@@ -200,15 +200,20 @@ impl Program {
 
 #[cfg(test)]
 mod tests {
-    use crate::program::{Program, ProgramConfig};
+    use crate::program::ProgramConfig;
     use validator::Validate;
+    /*use crate::configs::array_config::ArrayConfig;
+
+    #[test]
+    fn des_test() {
+        let json = r#"{"path":"123", "path_to_temp":"456", "args":[], "gens":1, "iters":1}"#;
+        let _: ProgramConfig = serde_json::from_str(&json).unwrap();
+    }*/
 
     #[test]
     fn validate_test() {
-        let json = r#"{"path":"123", "args":[], "gens":1, "iters":1}"#;
+        let json = r#"{"path":"123", "path_to_temp":"456", "args":[], "gens":1, "iters":1}"#;
         let config: ProgramConfig = serde_json::from_str(&json).unwrap();
         config.validate().unwrap();
-
-        let _program: Program = config.into();
     }
 }

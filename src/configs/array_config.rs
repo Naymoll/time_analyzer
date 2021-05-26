@@ -9,22 +9,6 @@ pub struct ArrayConfig {
     range: Range,
 }
 
-impl Default for ArrayConfig {
-    fn default() -> Self {
-        ArrayConfig {
-            value: Value::Int {
-                min: i64::MIN,
-                max: i64::MAX,
-            },
-            range: Range {
-                start: 10,
-                end: 2000,
-                multiplier: 2,
-            },
-        }
-    }
-}
-
 impl ArgumentGenerator for ArrayConfig {
     fn len(&self) -> usize {
         self.range.start
