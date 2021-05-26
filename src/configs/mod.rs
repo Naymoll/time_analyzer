@@ -85,6 +85,7 @@ pub struct Range {
     #[serde(default = "Range::end_default")]
     pub end: usize,
     #[serde(default = "Range::multiplier_default")]
+    #[validate(range(min = 2))]
     pub multiplier: usize,
 }
 

@@ -27,3 +27,21 @@ impl Default for Run {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::run::Run;
+
+    #[test]
+    fn update_test() {
+        let mut run = Run::default();
+        run.update(10.0);
+
+        assert_eq!(Run {
+            min: 10.0,
+            max: 10.0,
+            avg: 10.0,
+            len: 0,
+        }, run)
+    }
+}
