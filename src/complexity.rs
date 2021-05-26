@@ -1,7 +1,10 @@
+//! Вывод асимптотической временной сложности в BigO нотации.
+
 use crate::run::Run;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
+/// Варианты временных сложностей.
 #[derive(Copy, Clone, Debug)]
 pub enum Complexity {
     O1,
@@ -14,6 +17,7 @@ pub enum Complexity {
 }
 
 impl Complexity {
+    /// Возвращает функции соответсвующей ей сложности. O(N) -> N, O(N^2) -> N^2...
     pub fn curve(&self) -> impl Fn(usize) -> f64 {
         match self {
             Complexity::OLogN => |s| (s as f64).log2(),
@@ -43,12 +47,16 @@ impl Display for Complexity {
 }
 
 pub struct LeastSquares {
+    /// Коэффициент
     pub coef: f64,
+    /// Сложность программы.
     pub complexity: Complexity,
+    /// Ошибка.
     pub rms: f64,
 }
 
 impl LeastSquares {
+    #[doc(hidden)]
     fn minimal_least_squares<F>(runs: &[Run], fitting_curve: F) -> Self
     where
         F: Fn(usize) -> f64,
@@ -82,6 +90,7 @@ impl LeastSquares {
         }
     }
 
+    /// Вычисляет временную сложность на основе времени выполнения программы методов наименьших квадратов.
     pub fn computate_big_o(times: &[Run]) -> Self {
         const COMPLEXITIES: [Complexity; 5] = [
             Complexity::OLogN,

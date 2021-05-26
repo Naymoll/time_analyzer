@@ -16,6 +16,7 @@ use crate::program::Program;
 use crate::report::Report;
 use std::path::Path;
 
+/// Главная функция.
 fn main() {
     let matches = App::new("Time analyzer")
         .version(clap::crate_version!())

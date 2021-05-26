@@ -1,16 +1,25 @@
+//! Итоговый отчет.
+
 use crate::complexity::{Complexity, LeastSquares};
 use crate::run::Run;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 
+/// Итоговый отчет по запуску пользовательской программы.
 #[derive(Debug)]
 pub struct Report {
+    /// Путь до пользовательской программы.
     bin_path: PathBuf,
+    /// Путь до конфигурационного файла.
     cfg_path: PathBuf,
+    /// Массив запусков.
     runs: Vec<Run>,
+    /// Итоговая асимптотическая сложность.
     complexity: Complexity,
+    /// Коэффициент.
     coef: f64,
+    /// Ошибка.
     rms: f64,
 }
 

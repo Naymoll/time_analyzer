@@ -1,13 +1,20 @@
+//! Описание аргумента матрицы.
+
 use crate::configs::{generate_matrix, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
 use serde::Deserialize;
 use validator::Validate;
 
+/// Тип аргумента матрица.
 #[derive(Deserialize, Validate)]
 pub struct MatrixConfig {
+    /// Тип содержимого матрицы.
+    #[validate]
     value: Value,
+    /// Размер строк.
     #[validate]
     rows: Range,
+    /// Размер столбцов.
     #[validate]
     columns: Range,
 }

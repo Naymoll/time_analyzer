@@ -1,7 +1,10 @@
+//! Описание аргумента диапазона.
+
 use crate::configs::{ArgumentGenerator, Range};
 use serde::Deserialize;
 use validator::Validate;
 
+/// Тип аргумента диапазон.
 #[derive(Deserialize, Validate)]
 pub struct RangeConfig {
     #[serde(flatten)]
