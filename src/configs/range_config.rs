@@ -1,7 +1,7 @@
 use crate::configs::{ArgumentGenerator, Range};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct RangeConfig {
     #[serde(flatten)]
     range: Range,

@@ -1,8 +1,8 @@
 use crate::configs::{generate_matrix, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct MatrixConfig {
     value: Value,
     rows: Range,

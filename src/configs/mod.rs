@@ -8,7 +8,7 @@ use crate::configs::range_config::RangeConfig;
 
 use rand::distributions::Distribution;
 use rand::Rng;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use validator::Validate;
 
@@ -21,14 +21,14 @@ pub trait ArgumentGenerator {
 //Костыль. Нельзя просто так сделать десериализацию в Vec<dyn ArgumentGenerator>
 //т.к это нарушение trait object safety.
 //Возможно, есть другой способ, но я - ¯\_(ツ)_/¯
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub enum Config {
     Array(ArrayConfig),
     Matrix(MatrixConfig),
     Range(RangeConfig),
 }
 
-#[derive(Deserialize, Serialize, Copy, Clone)]
+#[derive(Deserialize, Copy, Clone)]
 #[serde(tag = "type")]
 pub enum Value {
     Int {
@@ -67,7 +67,7 @@ impl Value {
     }
 }
 
-#[derive(Deserialize, Serialize, Validate, Copy, Clone)]
+#[derive(Deserialize, Validate, Copy, Clone)]
 pub struct Range {
     #[serde(default = "Range::start_default")]
     #[validate(range(min = 1))]
@@ -135,16 +135,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::configs::{ArrayConfig, Config, MatrixConfig};
-
-    #[test]
-    fn serialization_test() {
-        let mut data = Vec::new();
-        data.push(Config::Array(ArrayConfig::default()));
-        data.push(Config::Matrix(MatrixConfig::default()));
-
-        let _to_json = serde_json::to_string(&data).unwrap();
-    }
+    use crate::configs::Config;
 
     #[test]
     fn deserialization_test() {

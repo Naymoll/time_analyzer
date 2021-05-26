@@ -1,8 +1,8 @@
 use crate::configs::{generate_array, ArgumentGenerator, Range, Value};
 use rand::distributions::{Alphanumeric, Uniform};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct ArrayConfig {
     value: Value,
     #[serde(flatten)]
