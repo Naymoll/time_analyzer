@@ -61,32 +61,27 @@ impl LeastSquares {
     where
         F: Fn(usize) -> f64,
     {
-        let mut _sigma_gn = 0.0;
-        let mut sigma_gn_squared = 0.0;
-        let mut sigma_time = 0.0;
-        let mut sigma_time_gn = 0.0;
+        let (sq_points, times, time_points) = runs.iter().fold((0.0, 0.0, 0.0), |acc, run| {
+            let point = fitting_curve(run.len);
 
-        for run in runs {
-            let gn_i = fitting_curve(run.len);
-            _sigma_gn += gn_i;
-            sigma_gn_squared += gn_i * gn_i;
-            sigma_time += run.min;
-            sigma_time_gn += run.min * gn_i;
-        }
+            let sq_points = acc.0 + point.powi(2);
+            let times = acc.1 + run.min;
+            let time_points = acc.2 + run.min * point;
 
-        let coef = sigma_time_gn / sigma_gn_squared;
-        let rms = runs.iter().fold(0.0, |rms, run| {
+            (sq_points, times, time_points)
+        });
+
+        let coef = time_points / sq_points;
+        let rms = runs.iter().fold(0.0, |acc, run| {
             let fit = coef * fitting_curve(run.len);
-            rms + (run.min - fit).powi(2)
+            acc + (run.min - fit).powi(2)
         });
 
         let len = runs.len() as f64;
-        let mean = sigma_time / len;
-
         LeastSquares {
             coef,
             complexity: Complexity::Unknown,
-            rms: (rms / len).sqrt() / mean,
+            rms: (rms / len).sqrt() / (times / len),
         }
     }
 
